@@ -9,6 +9,7 @@ import datetime as dt
 
 # ---------- constants ----------
 REWARD_STREAK_DAYS = 7
+MAX_GOAL = 1000
 DATA_FILE = "data/Habit.csv"
 TEST_DATA_FILE = "data/test_habits.csv"
 
@@ -64,8 +65,8 @@ def validate_frame(df):
     if (df[COL_HABIT].str.strip() == "").any() or (df[COL_START] == "").any():
         raise ValueError("Every row needs a Habit name and a Start_Date.")
     goals = pd.to_numeric(df[COL_GOAL], errors="coerce")
-    if goals.isna().any() or (goals < 1).any():
-        raise ValueError("Goal must be a number of at least 1.")
+    if goals.isna().any() or (goals % 1 != 0).any() or (goals < 1).any() or (goals > MAX_GOAL).any():
+        raise ValueError(f"Goal must be a whole number from 1 to {MAX_GOAL}.")
     df[COL_GOAL] = goals.astype(int).astype(str)
     if not df[COL_STATUS].isin(["", STATUS_DONE, STATUS_NOT_DONE]).all():
         raise ValueError(f"Status must be empty, '{STATUS_DONE}' or '{STATUS_NOT_DONE}'.")
@@ -303,7 +304,7 @@ def page_manage():
     with st.form("add_form", clear_on_submit=True):
         name = st.text_input("Name")
         frequency = st.selectbox("Frequency", FREQUENCY_OPTIONS)
-        goal = st.number_input("Goal (times per period)", min_value=1, value=1, step=1)
+        goal = st.number_input("Goal (times per period)", min_value=1, max_value=MAX_GOAL, value=1, step=1)
         category = st.selectbox("Category", HABIT_CATEGORIES)
         start = st.date_input("Start date", value=dt.date.today())
         if st.form_submit_button("Accept"):
@@ -329,7 +330,8 @@ def page_manage():
             name = st.text_input("Name", value=habit, key=f"edit_name_{habit}")
             frequency = st.selectbox("Frequency", FREQUENCY_OPTIONS, index=FREQUENCY_OPTIONS.index(cur[COL_FREQUENCY]),
                                      key=f"edit_freq_{habit}")
-            goal = st.number_input("Goal (times per period)", min_value=1, value=int(cur[COL_GOAL]), step=1,
+            goal = st.number_input("Goal (times per period)", min_value=1, max_value=MAX_GOAL,
+                                   value=min(max(int(cur[COL_GOAL]), 1), MAX_GOAL), step=1,
                                    key=f"edit_goal_{habit}")
             category = st.selectbox("Category", HABIT_CATEGORIES, index=HABIT_CATEGORIES.index(cur[COL_CATEGORY]),
                                     key=f"edit_cat_{habit}")
