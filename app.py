@@ -1,22 +1,40 @@
-# Habit Tracker App
-# Built with Streamlit, Pandas, Plotly, Matplotlib, and Seaborn
+# ==============================================================================
+# HABIT TRACKER APP
+# Built with: Streamlit, Pandas, Plotly Express, Matplotlib & Seaborn
+# ==============================================================================
 
-import streamlit as st
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
-import plotly.express as px
-import datetime as dt
+# ------------------------------------------------------------------------------
+# 1. IMPORTS (From our Python & Data Science course modules)
+# ------------------------------------------------------------------------------
+import streamlit as st           # Web interface widgets and layout
+import pandas as pd              # Data tables, CSV loading, filtering, grouping
+import numpy as np               # Number calculations (np.where)
+import matplotlib.pyplot as plt  # Matplotlib for dark mode plot styles
+import seaborn as sns            # Seaborn for drawing the attendance heatmap
+import plotly.express as px      # Plotly Express for dark mode interactive charts
+import datetime as dt            # Datetime for managing calendar dates and streaks
 
-# columns needed in our habit csv file
-columns = ["Habit", "Category", "Frequency", "Goal", "Start_Date", "Date", "Status", "Excuse"]
 
-# categories and frequencies we can choose from
+# ------------------------------------------------------------------------------
+# 2. CONFIGURATION & CONSTANTS
+# ------------------------------------------------------------------------------
+# All 8 columns expected in our CSV file
+columns = [
+    "Habit",        # Name of the habit (e.g. Drink Water)
+    "Category",     # Group (Health, Fitness, etc.)
+    "Frequency",    # Daily or Weekly
+    "Goal",         # Target count per day/week
+    "Start_Date",   # When the habit begins (YYYY-MM-DD)
+    "Date",         # Log date for daily check-ins
+    "Status",       # Done or Not Done
+    "Excuse",       # Reason why it was missed (optional)
+]
+
+# Available dropdown options
 categories = ["Health", "Fitness", "Learning", "Mindfulness", "Productivity", "Other"]
 frequencies = ["Daily", "Weekly"]
 
-# default starter habits if someone starts fresh
+# Predefined starter habits for brand-new users
 starter_habits = [
     {"Habit": "Drink Water", "Category": "Health", "Frequency": "Daily", "Goal": 8},
     {"Habit": "Exercise", "Category": "Fitness", "Frequency": "Daily", "Goal": 1},
@@ -25,39 +43,51 @@ starter_habits = [
     {"Habit": "Sleep Early", "Category": "Health", "Frequency": "Daily", "Goal": 1},
 ]
 
-# colors for done and not done
-status_colors = {"Done": "#2e9e5b", "Not Done": "#d9534f"}
+# Chart colors: green for completed, red for missed
+status_colors = {
+    "Done": "#2e9e5b",
+    "Not Done": "#d9534f"
+}
 
 
-# check which dataset is selected in the sidebar
+# ==============================================================================
+# 3. HELPER FUNCTIONS (DATA LOADING, SAVING & STREAKS)
+# ==============================================================================
+
+# Helper to find which CSV file path to use (Actual vs Test)
 def get_file():
     if st.session_state.get("dataset") == "Test data":
         return "data/test_habits.csv"
     return "data/Habit.csv"
 
 
-# load the csv file into pandas
+# Load data from the CSV file into a pandas dataframe
 def load_data():
     file_path = get_file()
     try:
-        # read csv file using pandas
+        # Read CSV file using pandas read_csv
         tracker = pd.read_csv(file_path, dtype=str)
         tracker = tracker.fillna("")
-        # make sure all columns are there
+        
+        # Ensure every required column exists in the dataframe
         for col_name in columns:
             if col_name not in tracker.columns:
                 tracker[col_name] = ""
+                
         return tracker[columns]
+        
     except FileNotFoundError:
-        # handle file not found error like in error handling lesson
-        st.warning(f"File {file_path} not found. Starting with a blank tracker.")
+        # If the file does not exist yet, show a friendly warning and return an empty table
+        st.warning(f"File '{file_path}' not found. Starting with a blank tracker.")
         return pd.DataFrame(columns=columns)
+        
     except Exception as error:
+        # Catch any other reading error
         st.error(f"Error loading {file_path}: {error}")
         return pd.DataFrame(columns=columns)
 
 
-# save the dataframe back to csv
+# Save the dataframe back to the CSV file
 def save_data(table):
     file_path = get_file()
     try:
@@ -68,35 +98,44 @@ def save_data(table):
         return False
 
 
-# get unique habit list without repeated daily logs
+# Extract unique habits (one row per habit, without the daily logs)
 def get_habits(table):
     if table.empty:
         return pd.DataFrame(columns=["Habit", "Category", "Frequency", "Goal", "Start_Date"])
-    # drop duplicate rows to keep only one per habit
+    
+    # Drop duplicate habit names to see each habit only once
     unique_habits = table.drop_duplicates(subset=["Habit"])
     return unique_habits[["Habit", "Category", "Frequency", "Goal", "Start_Date"]].reset_index(drop=True)
 
 
-# check if habit name is valid and not already used
+# Validate that a habit name is not empty and not already taken
 def check_name(name, table, editing=None):
     clean_name = name.strip()
+    
+    # Check if user left the text input empty
     if not clean_name:
         return "Habit name cannot be empty."
-    # list comprehension to check lowercase names
+        
+    # Check if name is already taken (case-insensitive)
     taken_names = [h.lower() for h in table["Habit"].unique() if h != editing]
     if clean_name.lower() in taken_names:
         return f"A habit named '{clean_name}' already exists!"
+        
     return None
 
 
-# calculate current streak and best streak using for loop and dates
+# Calculate current streak and best streak using for loop over dates
 def get_streaks(table, habit_name, today_date):
-    # filter rows where status is Done
-    done_records = table[(table["Habit"] == habit_name) & (table["Status"] == "Done") & (table["Date"] != "")]
+    # Step 1: Filter rows where this habit was marked as Done
+    done_records = table[
+        (table["Habit"] == habit_name) & 
+        (table["Status"] == "Done") & 
+        (table["Date"] != "")
+    ]
     if done_records.empty:
         return 0, 0
     
-    # get sorted unique dates as list
+    # Step 2: Get a sorted list of unique completed dates
     dates = pd.to_datetime(done_records["Date"]).dt.date.drop_duplicates().sort_values().tolist()
     
     current_streak = 0
@@ -104,7 +143,7 @@ def get_streaks(table, habit_name, today_date):
     streak_counter = 0
     prev_date = None
     
-    # loop through dates to count consecutive days
+    # Step 3: Loop through dates and check if consecutive
     for logged_day in dates:
         if prev_date is not None and (logged_day - prev_date).days == 1:
             streak_counter += 1
@@ -116,7 +155,7 @@ def get_streaks(table, habit_name, today_date):
             
         prev_date = logged_day
         
-    # check if streak is active today or yesterday
+    # Step 4: Check if streak is still active (logged today or yesterday)
     if dates and (today_date - dates[-1]).days <= 1:
         current_streak = streak_counter
     else:
@@ -125,16 +164,17 @@ def get_streaks(table, habit_name, today_date):
     return current_streak, best_streak
 
 
-# add or update a log record in the dataframe
+# Add or update a daily check-in log for a habit
 def add_log(table, habit_name, log_date, status, excuse=""):
     date_str = str(log_date)
-    # find habit info row
+    
+    # Step 1: Find the habit definition details
     matched = table[table["Habit"] == habit_name]
     if matched.empty:
         return table
     habit_info = matched.iloc[0]
     
-    # new row dictionary
+    # Step 2: Create dictionary for the new log entry
     new_entry = {
         "Habit": habit_name,
         "Category": habit_info["Category"],
@@ -146,37 +186,87 @@ def add_log(table, habit_name, log_date, status, excuse=""):
         "Excuse": excuse,
     }
     
-    # remove old row for this date or empty placeholder
-    filtered_table = table[~((table["Habit"] == habit_name) & ((table["Date"] == date_str) | (table["Date"] == "")))]
+    # Step 3: Remove any previous log for this habit on this date (or empty placeholder)
+    filtered_table = table[
+        ~(
+            (table["Habit"] == habit_name) & 
+            ((table["Date"] == date_str) | (table["Date"] == ""))
+        )
+    ]
     
-    # concat new row to table
+    # Step 4: Append the new entry using pd.concat
     updated_table = pd.concat([filtered_table, pd.DataFrame([new_entry])], ignore_index=True)
     return updated_table
 
 
-# ==========================================
-# PAGE 1: ADD HABIT
-# ==========================================
+# Render 30-day attendance heatmap in dark mode using Seaborn
+def show_heatmap(records):
+    # Step 1: Filter records to the last 30 logged days
+    last_date = pd.to_datetime(records["Date"]).max()
+    start_date = last_date - pd.Timedelta(days=30)
+    recent = records[pd.to_datetime(records["Date"]) > start_date].copy()
+    if recent.empty:
+        return
+        
+    # Step 2: Use np.where (1 for Done, 0 for Not Done)
+    recent["val"] = np.where(recent["Status"] == "Done", 1, 0)
+    
+    # Step 3: Pivot table with habits as rows and dates as columns
+    grid = recent.pivot_table(index="Habit", columns="Date", values="val", aggfunc="max")
+    grid.columns = [str(c)[5:] for c in grid.columns]  # show MM-DD
+    
+    # Step 4: Apply dark background style from matplotlib
+    plt.style.use('dark_background')
+    fig, ax = plt.subplots(figsize=(10, max(2.5, 0.5 * len(grid) + 1.2)))
+    
+    # Step 5: Draw heatmap with red for missed and green for done
+    sns.heatmap(
+        grid,
+        cmap=[status_colors["Not Done"], status_colors["Done"]],
+        vmin=0,
+        vmax=1,
+        cbar=False,
+        linewidths=0.5,
+        linecolor="#1f2328",
+        ax=ax,
+    )
+    ax.set_title("30-Day Attendance Grid (Green = Done, Red = Missed)", color="white", fontsize=12, pad=10)
+    ax.set_xlabel("Date (MM-DD)", color="white")
+    ax.set_ylabel("")
+    ax.tick_params(colors="white")
+    fig.patch.set_facecolor('#0e1117')
+    ax.set_facecolor('#0e1117')
+    
+    st.pyplot(fig)
+    plt.close(fig)
+    plt.style.use('default')  # Reset style back to default
+
+
+# ==============================================================================
+# 4. PAGE 1: ADD A HABIT
+# ==============================================================================
 
 def page_add():
     st.subheader("Create a New Habit")
     habits_data = load_data()
     
-    # form to add a habit
+    # Form for adding a new habit
     with st.form("add_form", clear_on_submit=True):
-        name_input = st.text_input("Name")
+        name_input = st.text_input("Name", placeholder="e.g. Morning Walk")
         freq_input = st.selectbox("Frequency", frequencies)
         goal_input = st.number_input("Goal (times per period)", min_value=1, max_value=1000, value=1, step=1)
         cat_input = st.selectbox("Category", categories)
         start_input = st.date_input("Start date", value=dt.date.today())
         
         submit_btn = st.form_submit_button("Accept")
+        
         if submit_btn:
+            # Check name validity
             name_error = check_name(name_input, habits_data)
             if name_error:
                 st.error(name_error)
             else:
-                # new habit row with empty date initially
+                # Build dictionary for the new habit
                 new_habit = {
                     "Habit": name_input.strip(),
                     "Category": cat_input,
@@ -189,17 +279,17 @@ def page_add():
                 }
                 new_table = pd.concat([habits_data, pd.DataFrame([new_habit])], ignore_index=True)
                 if save_data(new_table):
-                    st.success(f"Added '{name_input.strip()}' successfully! Go to Log Habit to start tracking.")
+                    st.success(f"Added '{name_input.strip()}'! Go to Log Habit to start tracking.")
 
 
-# ==========================================
-# PAGE 2: LOG HABIT
-# ==========================================
+# ==============================================================================
+# 5. PAGE 2: LOG HABIT (CHECK-INS & STREAKS)
+# ==============================================================================
 
 def page_log():
     habits_data = load_data()
     
-    # celebration balloons when achieving 7 day streak
+    # Reward celebration: balloons when reaching multiples of 7 days
     if "reward" in st.session_state:
         st.success(st.session_state.pop("reward"))
         st.balloons()
@@ -209,17 +299,18 @@ def page_log():
         st.info("No habits yet. Add one on the Add Habit page or load starter habits in Manage Habits.")
         return
         
+    # --- Section: Daily Logger ---
     st.subheader("Daily Logger")
     today = dt.date.today()
     picked_date = st.date_input("Date", value=today, max_value=today)
     date_str = str(picked_date)
     
-    # filter habits active on or before this date
+    # Filter habits that started on or before the chosen date
     active_habits = habit_list[habit_list["Start_Date"] <= date_str]
     if active_habits.empty:
         st.info("No habits are active on this date. Add one on the Add Habit page.")
     else:
-        # get logs for selected date
+        # Get existing logs for this date
         day_logs = habits_data[habits_data["Date"] == date_str]
         
         for idx, row in active_habits.iterrows():
@@ -232,23 +323,23 @@ def page_log():
             col1, col2, col3 = st.columns([3, 1, 1])
             col1.write(f"**{habit_name}**{mark}")
             
-            # Done button
+            # Button: Mark Done
             if col2.button("✅ Done", key=f"done_{habit_name}"):
                 updated = add_log(habits_data, habit_name, picked_date, "Done")
                 if save_data(updated):
-                    # check for 7-day multiple to trigger balloons
+                    # Check streak for 7-day reward
                     cur, _ = get_streaks(updated, habit_name, dt.date.today())
                     if cur > 0 and cur % 7 == 0:
                         st.session_state["reward"] = f"🔥 {cur}-day streak on '{habit_name}'! Great job!"
                     st.rerun()
                     
-            # Not Done button
+            # Button: Mark Not Done
             if col3.button("❌ Not Done", key=f"notdone_{habit_name}"):
                 updated = add_log(habits_data, habit_name, picked_date, "Not Done")
                 if save_data(updated):
                     st.rerun()
                     
-    # Streaks section
+    # --- Section: Streaks & Milestones ---
     st.subheader("Streaks & Milestones")
     streak_rows = []
     for h in habit_list["Habit"]:
@@ -256,62 +347,24 @@ def page_log():
         streak_rows.append({"Habit": h, "Current": c, "Best": b})
     streak_table = pd.DataFrame(streak_rows)
     
-    # banner for habits with 7+ days streak
+    # Milestone banner for habits with 7 or more consecutive days
     hot_habits = streak_table[streak_table["Current"] >= 7]["Habit"].tolist()
     if hot_habits:
         st.success(f"🔥 7+ day streak milestone achieved: {', '.join(hot_habits)}")
         
     metrics_cols = st.columns(4)
     for i, r in streak_table.iterrows():
-        metrics_cols[i % 4].metric(r["Habit"], f"{r['Current']} days", f"best {r['Best']}", delta_color="off")
+        metrics_cols[i % 4].metric(
+            r["Habit"],
+            f"{r['Current']} days",
+            f"best {r['Best']}",
+            delta_color="off"
+        )
 
 
-# ==========================================
-# PAGE 3: MY PROGRESS & ANALYTICS
-# ==========================================
-
-# darkmode heatmap function using matplotlib and seaborn
-def show_heatmap(records):
-    # filter records to last 30 days
-    last_date = pd.to_datetime(records["Date"]).max()
-    start_date = last_date - pd.Timedelta(days=30)
-    recent = records[pd.to_datetime(records["Date"]) > start_date].copy()
-    if recent.empty:
-        return
-        
-    # use np.where from numpy lesson: 1 for Done, 0 for Not Done
-    recent["val"] = np.where(recent["Status"] == "Done", 1, 0)
-    
-    # pivot table to get habits as rows and dates as columns
-    grid = recent.pivot_table(index="Habit", columns="Date", values="val", aggfunc="max")
-    grid.columns = [str(c)[5:] for c in grid.columns]
-    
-    # dark background from data viz module
-    plt.style.use('dark_background')
-    fig, ax = plt.subplots(figsize=(10, max(2.5, 0.5 * len(grid) + 1.2)))
-    
-    # seaborn heatmap with custom colors: red for missed, green for done
-    sns.heatmap(
-        grid,
-        cmap=[status_colors["Not Done"], status_colors["Done"]],
-        vmin=0,
-        vmax=1,
-        cbar=False,
-        linewidths=0.5,
-        linecolor="#1f2328",
-        ax=ax,
-    )
-    ax.set_title("30-Day Attendance Grid (Dark Mode: Green = Done, Red = Missed)", color="white", fontsize=12, pad=10)
-    ax.set_xlabel("Date (MM-DD)", color="white")
-    ax.set_ylabel("")
-    ax.tick_params(colors="white")
-    fig.patch.set_facecolor('#0e1117')
-    ax.set_facecolor('#0e1117')
-    
-    st.pyplot(fig)
-    plt.close(fig)
-    plt.style.use('default')  # reset style
-
+# ==============================================================================
+# 6. PAGE 3: MY PROGRESS (CHARTS & DARK MODE HEATMAP)
+# ==============================================================================
 
 def page_progress():
     habits_data = load_data()
@@ -322,12 +375,12 @@ def page_progress():
         
     st.subheader("Analytics & Trends")
     
-    # category and status filters
+    # --- Filter Controls ---
     col_cat, col_stat = st.columns(2)
     chosen_cats = col_cat.multiselect("Categories", categories, default=categories)
     chosen_status = col_stat.radio("Show records", ["All", "Done", "Not Done"], horizontal=True)
     
-    # filter log records
+    # Filter log records
     records = habits_data[habits_data["Date"] != ""]
     cat_records = records[records["Category"].isin(chosen_cats)]
     
@@ -340,7 +393,7 @@ def page_progress():
         st.info("No log records match these filters yet. Log your habits in Log Habit.")
         return
         
-    # completion rate and pie chart
+    # --- Row 1: Overall Completion Rate & Pie Chart ---
     left_col, right_col = st.columns(2)
     
     done_count = (cat_records["Status"] == "Done").sum()
@@ -351,7 +404,7 @@ def page_progress():
         st.metric("Overall Completion Rate", f"{round(rate, 1)}%", f"{done_count} done out of {total_count} logs")
         st.progress(min(max(rate / 100, 0.0), 1.0))
         
-    # pie chart done vs not done with dark plotly template
+    # Pie chart with dark theme
     status_counts = cat_records["Status"].value_counts().reset_index()
     status_counts.columns = ["Status", "Count"]
     pie_chart = px.pie(
@@ -366,7 +419,7 @@ def page_progress():
     with right_col:
         st.plotly_chart(pie_chart, use_container_width=True)
         
-    # bar chart by category (groupby in pandas)
+    # --- Row 2: Records by Category (Grouped Bar Chart) ---
     by_category = filtered_records.groupby(["Category", "Status"]).size().reset_index(name="Count")
     bar_category = px.bar(
         by_category,
@@ -380,7 +433,7 @@ def page_progress():
     )
     st.plotly_chart(bar_category, use_container_width=True)
     
-    # current vs best streak chart
+    # --- Row 3: Current vs Best Streak Chart ---
     today = dt.date.today()
     streaks_list = []
     filtered_habits = habit_list[habit_list["Category"].isin(chosen_cats)]
@@ -401,7 +454,7 @@ def page_progress():
         )
         st.plotly_chart(streak_bar, use_container_width=True)
         
-    # daily trend line chart
+    # --- Row 4: Daily Attendance Trend (Line Chart) ---
     daily_trend = filtered_records.groupby(["Date", "Status"]).size().reset_index(name="Count").sort_values("Date")
     line_chart = px.line(
         daily_trend,
@@ -415,21 +468,23 @@ def page_progress():
     )
     st.plotly_chart(line_chart, use_container_width=True)
     
-    # 30-day heatmap in dark mode
+    # --- Row 5: 30-Day Attendance Heatmap (Dark Mode) ---
     show_heatmap(filtered_records)
     
-    with st.expander("Log records table"):
+    # --- Data Table Expander ---
+    with st.expander("View log records table"):
         st.dataframe(filtered_records.sort_values("Date", ascending=False), hide_index=True)
 
 
-# ==========================================
-# PAGE 4: MANAGE HABITS & CSV
-# ==========================================
+# ==============================================================================
+# 7. PAGE 4: MANAGE HABITS (EDIT, DELETE & CSV)
+# ==============================================================================
 
 def page_manage():
     habits_data = load_data()
     habit_list = get_habits(habits_data)
     
+    # --- Section: Edit or Remove a Habit ---
     st.subheader("Edit or Remove a Habit")
     if habit_list.empty:
         st.info("No habits to edit yet.")
@@ -437,7 +492,7 @@ def page_manage():
         chosen_habit = st.selectbox("Habit", habit_list["Habit"])
         habit_row = habit_list[habit_list["Habit"] == chosen_habit].iloc[0]
         
-        # form to edit habit
+        # Form to edit habit details
         with st.form("edit_form"):
             new_name = st.text_input("Name", value=chosen_habit)
             new_freq = st.selectbox("Frequency", frequencies, index=frequencies.index(habit_row["Frequency"]))
@@ -472,16 +527,17 @@ def page_manage():
                         st.toast(f"Updated '{new_name.strip()}'!")
                         st.rerun()
                         
-        # button to delete habit
+        # Button: Delete Habit
         if st.button("Delete habit and all its logs"):
             remaining = habits_data[habits_data["Habit"] != chosen_habit]
             if save_data(remaining):
                 st.toast(f"Deleted '{chosen_habit}'!")
                 st.rerun()
                 
+    # --- Section: CSV & Predefined Habits ---
     st.subheader("CSV & Predefined Habits")
     
-    # load starter habits
+    # Button: Load Predefined Starter Habits
     if st.button("Load predefined habits"):
         existing_names = set(habits_data["Habit"].str.lower())
         new_items = []
@@ -504,12 +560,12 @@ def page_manage():
             if save_data(combined):
                 st.rerun()
                 
-    # switch to test data
+    # Button: Switch to Sample Test Dataset
     if st.button("Load sample test dataset"):
         st.session_state["dataset"] = "Test data"
         st.rerun()
         
-    # file uploader for csv
+    # File Uploader: Upload CSV to replace active dataset
     uploaded_file = st.file_uploader("Upload CSV (replaces active dataset after validation)", type="csv")
     if uploaded_file is not None:
         try:
@@ -526,7 +582,7 @@ def page_manage():
         except Exception as error:
             st.error(f"Upload rejected: {error}")
             
-    # download button
+    # Download Button: Export current dataset as CSV
     st.download_button(
         "Download current dataset",
         data=habits_data.to_csv(index=False),
@@ -535,14 +591,15 @@ def page_manage():
     )
 
 
-# ==========================================
-# PAGE 5: EXCUSE MANAGER
-# ==========================================
+# ==============================================================================
+# 8. PAGE 5: EXCUSE MANAGER (ACCOUNTABILITY FOR MISSED HABITS)
+# ==============================================================================
 
 def page_excuses():
     habits_data = load_data()
     habit_list = get_habits(habits_data)
     
+    # --- Section: Log a Missed Habit Form ---
     st.subheader("Log a Missed Habit")
     if habit_list.empty:
         st.info("No habits yet. Add one on the Add Habit page.")
@@ -550,7 +607,7 @@ def page_excuses():
         with st.form("excuse_form", clear_on_submit=True):
             chosen_missed = st.selectbox("Habit", habit_list["Habit"])
             missed_day = st.date_input("Date missed", value=dt.date.today(), max_value=dt.date.today())
-            reason_text = st.text_input("Reason")
+            reason_text = st.text_input("Reason", placeholder="e.g. Felt sick, busy at work")
             save_excuse = st.form_submit_button("Save excuse")
             
             if save_excuse:
@@ -565,13 +622,13 @@ def page_excuses():
                         st.success("Excuse saved!")
                         habits_data = load_data()
                         
-    # get rows that are Not Done with a date
+    # Filter for all missed records (Status == 'Not Done' and non-empty Date)
     missed_records = habits_data[(habits_data["Status"] == "Not Done") & (habits_data["Date"] != "")]
     if missed_records.empty:
         st.info("No missed habits recorded yet.")
         return
         
-    # excuse history table
+    # --- Section: Excuse History Table ---
     excuse_table = missed_records[missed_records["Excuse"] != ""]
     st.subheader("Excuse History")
     if excuse_table.empty:
@@ -582,7 +639,7 @@ def page_excuses():
             hide_index=True,
         )
         
-    # bar chart of most frequently missed habits
+    # --- Chart: Most Frequently Missed Habits ---
     missed_counts = missed_records["Habit"].value_counts().reset_index()
     missed_counts.columns = ["Habit", "Misses"]
     chart_missed = px.bar(
@@ -594,7 +651,7 @@ def page_excuses():
     )
     st.plotly_chart(chart_missed, use_container_width=True)
     
-    # bar chart of most common excuses
+    # --- Chart: Most Common Excuses ---
     if not excuse_table.empty:
         common_excuses = excuse_table["Excuse"].value_counts().reset_index()
         common_excuses.columns = ["Excuse", "Count"]
@@ -607,7 +664,7 @@ def page_excuses():
         )
         st.plotly_chart(chart_excuses, use_container_width=True)
         
-    # weekly line chart
+    # --- Chart: Weekly Misses Trend ---
     try:
         weekly = missed_records.copy()
         weekly["Week"] = pd.to_datetime(weekly["Date"]).dt.to_period("W").dt.start_time
@@ -625,23 +682,24 @@ def page_excuses():
         st.write("Could not calculate weekly trend:", error)
 
 
-# ==========================================
-# MAIN APP ENTRY POINT
-# ==========================================
+# ==============================================================================
+# 9. MAIN APP ENTRY POINT & SIDEBAR ROUTING
+# ==============================================================================
 
 def main():
+    # Configure the browser tab title and wide layout
     st.set_page_config(page_title="Habit Tracker", page_icon="📈", layout="wide")
     
-    # sidebar dataset chooser
+    # --- Sidebar: Dataset Selector (Actual data vs Test data) ---
     st.sidebar.radio("Dataset", ["Actual data", "Test data"], key="dataset")
     active_file = get_file()
     st.sidebar.caption(f"Reading and writing: {active_file}")
     
-    # navigation
+    # --- Sidebar: 5-Page Navigation ---
     pages = ["Add Habit", "Log Habit", "My Progress", "Manage Habits", "Excuse Manager"]
     page = st.sidebar.radio("Navigate", pages)
     
-    # page routing
+    # --- Page Routing (Control Flow) ---
     if page == "Add Habit":
         st.title("Add a Habit")
         page_add()
@@ -659,5 +717,6 @@ def main():
         page_excuses()
 
 
+# Run the application
 if __name__ == "__main__":
     main()
