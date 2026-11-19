@@ -193,7 +193,6 @@ Sleep Early,Health,Daily,1,2026-10-11,2026-11-15,Done,
 Sleep Early,Health,Daily,1,2026-10-11,2026-11-16,Done,
 Sleep Early,Health,Daily,1,2026-10-11,2026-11-17,Not Done,Sick
 Sleep Early,Health,Daily,1,2026-10-11,2026-11-18,Not Done,Forgot
-Sleep Early,Health,Daily,1,2026-10-11,2026-11-19,Done,
 Weekly Planning,Productivity,Weekly,1,2026-10-11,2026-10-11,Done,
 Weekly Planning,Productivity,Weekly,1,2026-10-11,2026-10-18,Not Done,Bad weather
 Weekly Planning,Productivity,Weekly,1,2026-10-11,2026-10-25,Not Done,Sick
@@ -201,8 +200,10 @@ Weekly Planning,Productivity,Weekly,1,2026-10-11,2026-11-01,Done,
 Weekly Planning,Productivity,Weekly,1,2026-10-11,2026-11-08,Done,
 Weekly Planning,Productivity,Weekly,1,2026-10-11,2026-11-15,Done,
 Weekly Planning,Productivity,Weekly,1,2026-10-11,2026-11-19,Done,
-Meditate,Mindfulness,Daily,1,2026-10-11,2026-11-19,Done,
-Read,Learning,Daily,1,2026-10-11,2026-11-19,Done,
-Exercise,Fitness,Daily,1,2026-10-11,2026-11-19,Done,
-Drink Water,Health,Daily,8,2026-10-11,2026-11-19,Done,
 Drink Water,Health,Daily,8,2026-10-11,2026-11-18,Not Done,Me was dumb
+Exercise,Fitness,Daily,1,2026-10-11,2026-11-19,Done,
+Read,Learning,Daily,1,2026-10-11,2026-11-19,Done,
+Meditate,Mindfulness,Daily,1,2026-10-11,2026-11-19,Done,
+Sleep Early,Health,Daily,1,2026-10-11,2026-11-19,Done,
+Drink Water,Health,Daily,8,2026-10-11,2026-11-19,Done,
+Ali,Productivity,Daily,1,2026-11-19,2026-11-19,Done,

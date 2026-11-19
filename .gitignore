@@ -6,3 +6,7 @@ __pycache__/
 .DS_Store
 .streamlit/secrets.toml
 .ipynb_checkpoints/
+Knoweldege_base/
+Knowldge_base/
+knowledge_base/
+
