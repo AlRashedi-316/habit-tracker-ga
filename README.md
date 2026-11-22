@@ -15,8 +15,6 @@ A clean, sequential Habit Tracker dashboard built with Python and Streamlit. It 
   4. Filtering **My Progress** with interactive category checkboxes and inspecting the 30-day attendance heatmap with its Green/Red visual legend.
   5. Reviewing missed records, on-demand **Excuse History**, habit-specific missed dates, and storytelling charts on **Excuse Manager**.
 
-> *Note: Any AI-generated images or visuals used in accompanying slides or presentation materials are explicitly labeled as AI-generated.*
-
 ---
 
 ## Sequential Page Overview
