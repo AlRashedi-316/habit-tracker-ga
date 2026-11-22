@@ -11,9 +11,9 @@ A clean, sequential Habit Tracker dashboard built with Python and Streamlit. It 
 - **What the Walkthrough Covers (2-minute tour):**
   1. Landing directly on **Log Habit** (default home page), triggering a 7-day streak `st.balloons()` celebration on *Drink Water*, and logging a **Not Done** habit with the inline excuse prompt.
   2. Creating a new habit on **Add Habit** with validation and preview.
-  3. Selecting and updating or deleting a habit sequentially on **Manage Habits**.
-  4. Filtering **My Progress** with interactive category checkboxes and inspecting the 30-day attendance heatmap with its Green/Red visual legend.
-  5. Reviewing missed records, on-demand **Excuse History**, habit-specific missed dates, and storytelling charts on **Excuse Manager**.
+  3. Editing, adding, or deleting habits in the interactive table and uploading/downloading CSVs on **Manage Habits**.
+  4. Filtering **My Progress** with interactive category checkboxes and inspecting completion rates, bar/pie charts, streaks, and the 30-day attendance heatmap.
+  5. Reviewing missed records, on-demand **Excuse History**, and excuse breakdown charts on **Excuse Manager**.
 
 ---
 
@@ -28,15 +28,14 @@ The app flows sequentially across 5 pages from left-to-right / top-to-bottom in 
 2. **Add Habit**
    - Create a habit with a unique name, category, frequency (`Daily` or `Weekly`), numeric goal, and start date, plus a `.head()` preview table of existing habits.
 3. **Manage Habits**
-   - Organized into two tabs: **Edit by Habit** (sequential habit-first dropdown to inspect metrics, edit, or delete) and **Interactive Table** (`st.data_editor()` spreadsheet-style editing with full validation).
+   - Spreadsheet-style **Interactive Table** (`st.data_editor()`) to edit cells, add rows, or delete habits while preserving historical logs on rename.
    - Includes validated CSV upload and UTF-8 CSV download.
 4. **My Progress**
    - Interactive category checkboxes and status radio buttons update all metrics and charts live.
-   - Includes a completion progress bar, Done vs. Not Done breakdown, category comparison, current vs. best streaks, daily attendance trend, and a 30-day attendance heatmap with a visual **Green = Attended / Red = Missed / Dark = Not Logged** legend.
-5. **Excuse Manager**
+   - Includes Overall Completion Rate + progress bar, Done vs. Not Done pie chart, Check-ins by Category bar chart, Current vs. Best Streak bar chart, and a 30-day interactive attendance heatmap (**Green = Attended / Red = Missed / Dark = Not Logged**).
+5. **Excuse Manager (Phase 3 Innovation)**
    - Fetches missed check-ins (`Status == "Not Done"`) and logged excuses straight from the active CSV, showing summary KPIs, a `.head(5)` preview, and an on-demand **Excuse History** view.
-   - Lets you pick a habit to review its missed dates and add or update an excuse.
-   - Storytelling charts highlight which habits are missed most often, top excuse reasons, weekly trends, and day-of-week patterns.
+   - Charts highlight **Most Missed Habits** and **Top Excuse Reasons**.
 
 ---
 
@@ -44,12 +43,10 @@ The app flows sequentially across 5 pages from left-to-right / top-to-bottom in 
 
 The application uses the following Python libraries (matching the imports in `app.py`):
 
-- `streamlit` — Web interface, layout, forms, metrics, and celebrations (`st.balloons()`)
+- `streamlit` — Web interface, layout, forms, interactive table, metrics, and celebrations (`st.balloons()`)
 - `pandas` — CSV loading/saving, filtering, grouping, and `.head()` / `.pivot_table()` summaries
 - `numpy` — Fast vectorized status encoding (`np.where`)
-- `matplotlib` — Figure styling and custom heatmap legend patches
-- `seaborn` — 30-day attendance heatmap visualization
-- `plotly` (`plotly.express`) — Interactive dark-mode pie, bar, and line charts
+- `plotly` (`plotly.express`) — Interactive dark-mode pie, bar, and 30-day heatmap charts
 - `datetime` *(Python standard library)* — Date picking, streak calculations, and date validation
 
 ---
@@ -78,7 +75,7 @@ The application uses the following Python libraries (matching the imports in `ap
 
 3. **Install the libraries:**
    ```bash
-   pip install streamlit pandas numpy matplotlib seaborn plotly
+   pip install -r requirements.txt
    ```
 
 4. **Run the updated Streamlit app:**
