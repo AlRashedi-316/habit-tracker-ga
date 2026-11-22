@@ -92,6 +92,8 @@ The application uses the following Python libraries (matching the imports in `ap
 
 ## Testing `st.balloons()` & Data File
 
+> **AI Test Data Disclosure:** All sample tracking records in `data/test_habits.csv` were generated with AI purely for testing and demonstration purposes.
+
 Data is loaded into `st.session_state["habits_df"]` for the active session and stored in `data/test_habits.csv` (`Habit,Category,Frequency,Goal,Start_Date,Date,Status,Excuse`), with CSV upload and UTF-8 download support.
 
 ### Quick `st.balloons()` Test Case
