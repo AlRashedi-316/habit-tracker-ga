@@ -117,7 +117,7 @@ if "flash" in st.session_state:
         st.info(msg)
     else:
         st.success(msg)
-    if level == "reward":
+    if level in ("reward", "done"):
         st.balloons()
     else:
         st.toast(msg)
@@ -157,9 +157,10 @@ if page == "Log Habit":
                     save_data(updated)
                     streak, _ = get_streaks(updated, name, picked)
                     if streak > 0 and streak % 7 == 0:
-                        st.session_state["flash"] = ("reward", f"🎉 Milestone reached! {streak}-day streak on '{name}'!")
+                        st.session_state["flash"] = ("reward", f"🎉 Milestone reached! {streak} days in a row on '{name}'!")
                     else:
-                        st.session_state["flash"] = ("success", f"Completed '{name}' for {date_text} (Streak: {streak}d).")
+                        unit = "day" if streak == 1 else "days"
+                        st.session_state["flash"] = ("done", f"Great job! You completed '{name}' — {streak} {unit} in a row!")
                     st.rerun()
                 if c_miss.button("❌ Not Done", key=f"miss_{name}_{date_text}", width="stretch"):
                     st.session_state["pending_excuse"] = {"habit": name, "date": date_text}
