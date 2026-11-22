@@ -7,11 +7,10 @@ import streamlit as st
 
 st.set_page_config(page_title="Habit Tracker", page_icon="📈", layout="wide")
 
-DATA_FILE = "data/test_habits.csv"
+DATA_FILE, FREQUENCIES = "data/test_habits.csv", ["Daily", "Weekly"]
 COLUMNS = ["Habit", "Category", "Frequency", "Goal", "Start_Date", "Date", "Status", "Excuse"]
 HABIT_COLS = COLUMNS[:5]
 CATEGORIES = ["Health", "Fitness", "Learning", "Mindfulness", "Productivity", "Other"]
-FREQUENCIES = ["Daily", "Weekly"]
 EXCUSES = ["No excuse", "Forgot", "Too tired", "Sick", "Ran out of time", "Bad weather", "Other (custom)"]
 ICONS = {"Health": "💧", "Fitness": "🏃", "Learning": "📖", "Mindfulness": "🧘", "Productivity": "⚡", "Other": "📌"}
 STATUS_COLORS = {"Done": "#2e9e5b", "Not Done": "#d9534f"}
@@ -110,13 +109,18 @@ st.sidebar.title("📈 Habit Tracker")
 page = st.sidebar.radio("Navigation", PAGES, index=0)
 if "habits_df" not in st.session_state:
     st.session_state["habits_df"] = load_data()
-df = st.session_state["habits_df"]
-habit_list = get_habits(df)
+df, habit_list = st.session_state["habits_df"], get_habits(st.session_state["habits_df"])
 
 if "flash" in st.session_state:
     level, msg = st.session_state.pop("flash")
-    (st.info if level == "info" else st.success)(msg)
-    st.balloons() if level == "reward" else st.toast(msg)
+    if level == "info":
+        st.info(msg)
+    else:
+        st.success(msg)
+    if level == "reward":
+        st.balloons()
+    else:
+        st.toast(msg)
 
 # === PAGE 1: LOG HABIT ===
 if page == "Log Habit":
