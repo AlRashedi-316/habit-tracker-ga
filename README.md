@@ -23,7 +23,7 @@ The app flows sequentially across 5 pages from left-to-right / top-to-bottom in 
 
 1. **Log Habit (Default Home)**
    - Opens directly to your daily check-in dashboard with subtle category icons.
-   - Clicking **Done** saves the completion to CSV and displays responsive feedback with your live streak count. Reaching a 7-day streak milestone (7, 14, 21, ...) triggers congratulatory balloons (`st.balloons()`).
+   - Clicking **Done** saves the completion to CSV, triggers celebratory `🎉` emoji rain (`streamlit-extras`), and shows your streak. Reaching a 7-day streak milestone (7, 14, 21, ...) triggers congratulatory balloons (`st.balloons()`).
    - Clicking **Not Done** immediately opens an inline excuse prompt to choose a predefined reason or enter a custom one before writing to CSV.
 2. **Add Habit**
    - Create a habit with a unique name, category, frequency (`Daily` or `Weekly`), numeric goal, and start date, plus a `.head()` preview table of existing habits.
@@ -43,7 +43,8 @@ The app flows sequentially across 5 pages from left-to-right / top-to-bottom in 
 
 The application uses the following Python libraries (matching the imports in `app.py`):
 
-- `streamlit` — Web interface, layout, forms, interactive table, metrics, and celebrations (`st.balloons()`)
+- `streamlit` — Web interface, layout, forms, interactive table, metrics, and 7-day milestone balloons (`st.balloons()`)
+- `streamlit-extras` — Fun `🎉` emoji rain (`let_it_rain.rain`) when checking off a daily habit
 - `pandas` — CSV loading/saving, filtering, grouping, and `.head()` / `.pivot_table()` summaries
 - `numpy` — Fast vectorized status encoding (`np.where`)
 - `plotly` (`plotly.express`) — Interactive dark-mode pie, bar, and 30-day heatmap charts
