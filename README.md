@@ -7,7 +7,7 @@ A clean, sequential Habit Tracker dashboard built with Python and Streamlit. It 
 ## Live App & Walkthrough Video
 
 - **Live Deployed App:** [https://habit-tracker-ga.streamlit.app/](https://habit-tracker-ga.streamlit.app/)
-- **Video Link:** [Walkthrough Video (Placeholder)](https://www.youtube.com)
+- **Video Link:** [Demo Video](https://youtu.be/0QVEaMjWtb0)
 - **What the Walkthrough Covers (2-minute tour):**
   1. Landing directly on **Log Habit** (default home page), triggering a 7-day streak `st.balloons()` celebration on *Drink Water*, and logging a **Not Done** habit with the inline excuse prompt.
   2. Creating a new habit on **Add Habit** with validation and preview.
