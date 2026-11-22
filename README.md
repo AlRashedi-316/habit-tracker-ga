@@ -47,7 +47,9 @@ The application uses the following Python libraries (matching the imports in `ap
 - `streamlit-extras` — Fun `🎉` emoji rain (`let_it_rain.rain`) when checking off a daily habit
 - `pandas` — CSV loading/saving, filtering, grouping, and `.head()` / `.pivot_table()` summaries
 - `numpy` — Fast vectorized status encoding (`np.where`)
-- `plotly` (`plotly.express`) — Interactive dark-mode pie, bar, and 30-day heatmap charts
+- `matplotlib` — Dark-mode figure styling and custom heatmap legend patches
+- `seaborn` — 30-day attendance heatmap (`DD-MM` on X-axis, habits on Y-axis)
+- `plotly` (`plotly.express`) — Interactive dark-mode pie and bar charts
 - `datetime` *(Python standard library)* — Date picking, streak calculations, and date validation
 
 ---

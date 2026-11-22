@@ -2,4 +2,6 @@ streamlit
 streamlit-extras
 pandas
 numpy
+matplotlib
+seaborn
 plotly

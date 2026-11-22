@@ -2,9 +2,11 @@
 # A Streamlit + Pandas app to add habits, log check-ins, track streaks, and manage excuses.
 
 import datetime as dt
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import plotly.express as px
+import seaborn as sns
 import streamlit as st
 from streamlit_extras.let_it_rain import rain
 
@@ -123,21 +125,37 @@ def apply_table_edits(habits_df, edited_df, original_names, deleted_positions=No
     return (pd.concat(rebuilt_frames, ignore_index=True)[COLUMNS] if rebuilt_frames else pd.DataFrame(columns=COLUMNS)), []
 
 
-# Draw an interactive 30-day Habit x Date attendance heatmap with Plotly
+# Draw a 30-day Habit (Y-axis) x Day-Month (X-axis) attendance heatmap with Seaborn
 def show_heatmap(records):
     heatmap_df = records[records["Status"].isin(["Done", "Not Done"])].assign(parsed_date=lambda frame: pd.to_datetime(frame["Date"], errors="coerce")).dropna(subset=["parsed_date"])
     if heatmap_df.empty:
         return st.info("No dated check-in records available for the heatmap.")
 
-    # Keep only the most recent 30 days and encode Done = 1, Not Done = 0 using np.where()
+    # Keep the most recent 30 days and encode Done = 1, Not Done = 0 using np.where()
     recent_logs = heatmap_df[heatmap_df["parsed_date"] >= heatmap_df["parsed_date"].max() - pd.Timedelta(days=29)].assign(status_code=lambda frame: np.where(frame["Status"] == "Done", 1.0, 0.0))
     attendance_grid = recent_logs.pivot_table(index="Habit", columns="parsed_date", values="status_code", aggfunc="max").sort_index(axis=1)
-    attendance_grid.columns = [date_col.strftime("%m-%d") for date_col in attendance_grid.columns]
+    attendance_grid.columns = [date_col.strftime("%d-%m") for date_col in attendance_grid.columns]
 
-    heatmap_fig = px.imshow(attendance_grid, color_continuous_scale=[[0.0, STATUS_COLORS["Not Done"]], [1.0, STATUS_COLORS["Done"]]], zmin=0, zmax=1, aspect="auto", title="30-Day Attendance Heatmap", template="plotly_dark")
-    heatmap_fig.update_coloraxes(showscale=False).update_traces(xgap=2, ygap=2).update_layout(plot_bgcolor="#161b22", xaxis_title="Date (MM-DD)", yaxis_title="")
-    st.plotly_chart(heatmap_fig, width="stretch")
-    st.caption("🟩 Attended (Done)  •  🟥 Missed (Not Done)  •  ⬛ Not Logged")
+    # Set dark background and size the figure based on the number of dates and habits
+    figure_width, figure_height = max(8.0, 0.42 * attendance_grid.shape[1] + 2.2), max(2.8, 0.55 * attendance_grid.shape[0] + 1.8)
+    figure, axis = plt.subplots(figsize=(figure_width, figure_height), facecolor="#0e1117")
+    axis.set_facecolor("#161b22")
+
+    # Draw green (Done) and red (Not Done) cells; unlogged days stay dark
+    sns.heatmap(attendance_grid, cmap=[STATUS_COLORS["Not Done"], STATUS_COLORS["Done"]], vmin=0, vmax=1, cbar=False, linewidths=0.6, linecolor="#0e1117", ax=axis)
+    legend_items = [plt.Rectangle((0, 0), 1, 1, facecolor=fill, edgecolor=edge, label=text) for fill, edge, text in [(STATUS_COLORS["Done"], "#0e1117", "Attended (Done)"), (STATUS_COLORS["Not Done"], "#0e1117", "Missed (Not Done)"), ("#161b22", "#484f58", "Not Logged")]]
+
+    axis.set_title("30-Day Attendance Heatmap", color="white", fontsize=13, pad=12)
+    axis.set_xlabel("Date (DD-MM)", color="white", labelpad=8)
+    axis.set_ylabel("Habit", color="white", labelpad=8)
+    axis.tick_params(axis="x", colors="white", rotation=45)
+    axis.tick_params(axis="y", colors="white", rotation=0)
+    plt.setp(axis.get_xticklabels(), ha="right")
+    axis.legend(handles=legend_items, loc="upper center", bbox_to_anchor=(0.5, -0.32), ncol=3, frameon=False, labelcolor="white", fontsize=10)
+
+    figure.tight_layout()
+    st.pyplot(figure, clear_figure=True)
+    plt.close(figure)
 
 
 # --- Sidebar Navigation & Session State Setup ---
