@@ -4,9 +4,10 @@ A clean, sequential Habit Tracker dashboard built with Python and Streamlit. It 
 
 ---
 
-## Live App & Walkthrough Video
+## Live App, Demo Video & Presentation
 
 - **Live Deployed App:** [https://habit-tracker-ga.streamlit.app/](https://habit-tracker-ga.streamlit.app/)
+- **Project Presentation (Canva):** [Canva Presentation Slides](https://canva.link/o8141wv7bb3pkga) *(Downloadable [PDF](Habit_Tracker_Presentation.pdf) / [PPTX](Habit_Tracker_Presentation.pptx))*
 - **Video Link:** [Demo Video](https://youtu.be/0QVEaMjWtb0)
 - **What the Walkthrough Covers (2-minute tour):**
   1. Landing directly on **Log Habit** (default home page), triggering a 7-day streak `st.balloons()` celebration on *Drink Water*, and logging a **Not Done** habit with the inline excuse prompt.
@@ -14,6 +15,8 @@ A clean, sequential Habit Tracker dashboard built with Python and Streamlit. It 
   3. Editing, adding, or deleting habits in the interactive table and uploading/downloading CSVs on **Manage Habits**.
   4. Filtering **My Progress** with interactive category checkboxes and inspecting completion rates, bar/pie charts, streaks, and the 30-day attendance heatmap.
   5. Reviewing missed records, on-demand **Excuse History**, and excuse breakdown charts on **Excuse Manager**.
+
+> **Note on Presentation:** The Canva presentation was created as part of this project. AI was used only to assist with the visual design and layout of the slides; the project concept, architecture, user stories, and logic were designed and built by the author.
 
 ---
 
